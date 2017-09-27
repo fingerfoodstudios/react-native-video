@@ -249,6 +249,7 @@ Video.propTypes = {
   src: PropTypes.object,
   seek: PropTypes.number,
   fullscreen: PropTypes.bool,
+  shouldGoFullScreenOnRotation: PropTypes.bool,
   onVideoLoadStart: PropTypes.func,
   onVideoLoad: PropTypes.func,
   onVideoBuffer: PropTypes.func,

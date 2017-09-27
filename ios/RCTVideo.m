@@ -43,6 +43,7 @@ static NSString *const timedMetadata = @"timedMetadata";
   BOOL _playbackStalled;
   BOOL _playInBackground;
   BOOL _playWhenInactive;
+  BOOL _shouldGoFullScreenOnRotation;
   NSString * _ignoreSilentSwitch;
   NSString * _resizeMode;
   BOOL _fullscreenPlayerPresented;
@@ -83,6 +84,11 @@ static NSString *const timedMetadata = @"timedMetadata";
                                              selector:@selector(applicationWillEnterForeground:)
                                                  name:UIApplicationWillEnterForegroundNotification
                                                object:nil];
+      
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidRotate:)
+                                                 name:UIDeviceOrientationDidChangeNotification
+                                                object:nil];
   }
 
   return self;
@@ -169,6 +175,16 @@ static NSString *const timedMetadata = @"timedMetadata";
   if (_playInBackground) {
     [_playerLayer setPlayer:_player];
   }
+}
+
+- (void)applicationDidRotate:(NSNotification *)notification
+{
+    UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
+    if (UIDeviceOrientationIsLandscape(orientation) && _shouldGoFullScreenOnRotation && !_fullscreenPlayerPresented) {
+        [self setFullscreen:YES];
+    } else if (UIDeviceOrientationIsPortrait(orientation) && _shouldGoFullScreenOnRotation && _fullscreenPlayerPresented) {
+        [self setFullscreen:NO];
+    }
 }
 
 #pragma mark - Progress
@@ -487,6 +503,10 @@ static NSString *const timedMetadata = @"timedMetadata";
 
 #pragma mark - Prop setters
 
+- (void)setShouldGoFullScreenOnRotation:(BOOL)shouldGoFullScreenOnRotation {
+    _shouldGoFullScreenOnRotation = shouldGoFullScreenOnRotation;
+}
+
 - (void)setResizeMode:(NSString*)mode
 {
   if( _controls )
@@ -633,7 +653,7 @@ static NSString *const timedMetadata = @"timedMetadata";
         }
         // Set presentation style to fullscreen
         [_playerViewController setModalPresentationStyle:UIModalPresentationFullScreen];
-
+        _playerViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
         // Find the nearest view controller
         UIViewController *viewController = [self firstAvailableUIViewController];
         if( !viewController )
@@ -651,8 +671,8 @@ static NSString *const timedMetadata = @"timedMetadata";
             if(self.onVideoFullscreenPlayerWillPresent) {
                 self.onVideoFullscreenPlayerWillPresent(@{@"target": self.reactTag});
             }
-            [viewController presentViewController:_playerViewController animated:true completion:^{
-                _playerViewController.showsPlaybackControls = YES;
+            [viewController presentViewController:_playerViewController animated:YES completion:^{
+                _playerViewController.showsPlaybackControls = _controls;
                 _fullscreenPlayerPresented = fullscreen;
                 if(self.onVideoFullscreenPlayerDidPresent) {
                     self.onVideoFullscreenPlayerDidPresent(@{@"target": self.reactTag});
@@ -663,7 +683,7 @@ static NSString *const timedMetadata = @"timedMetadata";
     else if ( !fullscreen && _fullscreenPlayerPresented )
     {
         [self videoPlayerViewControllerWillDismiss:_playerViewController];
-        [_presentingViewController dismissViewControllerAnimated:true completion:^{
+        [_presentingViewController dismissViewControllerAnimated:YES completion:^{
             [self videoPlayerViewControllerDidDismiss:_playerViewController];
         }];
     }
