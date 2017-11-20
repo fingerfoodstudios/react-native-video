@@ -180,9 +180,9 @@ static NSString *const timedMetadata = @"timedMetadata";
 - (void)applicationDidRotate:(NSNotification *)notification
 {
     UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
-    if (UIDeviceOrientationIsLandscape(orientation) && _shouldGoFullScreenOnRotation && !_fullscreenPlayerPresented) {
+    if (UIDeviceOrientationIsLandscape(orientation) && _shouldGoFullScreenOnRotation) {
         [self setFullscreen:YES forced:YES];
-    } else if (UIDeviceOrientationIsPortrait(orientation) && _shouldGoFullScreenOnRotation && _fullscreenPlayerPresented) {
+    } else if (UIDeviceOrientationIsPortrait(orientation) && _shouldGoFullScreenOnRotation) {
         [self setFullscreen:NO forced:YES];
     }
 }
