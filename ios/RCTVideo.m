@@ -181,9 +181,9 @@ static NSString *const timedMetadata = @"timedMetadata";
 {
     UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
     if (UIDeviceOrientationIsLandscape(orientation) && _shouldGoFullScreenOnRotation && !_fullscreenPlayerPresented) {
-        [self setFullscreen:YES];
+        [self setFullscreen:YES forced:YES];
     } else if (UIDeviceOrientationIsPortrait(orientation) && _shouldGoFullScreenOnRotation && _fullscreenPlayerPresented) {
-        [self setFullscreen:NO];
+        [self setFullscreen:NO forced:YES];
     }
 }
 
@@ -642,9 +642,9 @@ static NSString *const timedMetadata = @"timedMetadata";
     return _fullscreenPlayerPresented;
 }
 
-- (void)setFullscreen:(BOOL)fullscreen
+- (void)setFullscreen:(BOOL)fullscreen forced:(BOOL)forced
 {
-    if( fullscreen && !_fullscreenPlayerPresented )
+    if( fullscreen && (!_fullscreenPlayerPresented || forced))
     {
         // Ensure player view controller is not null
         if( !_playerViewController )
@@ -680,7 +680,7 @@ static NSString *const timedMetadata = @"timedMetadata";
             }];
         }
     }
-    else if ( !fullscreen && _fullscreenPlayerPresented )
+    else if ( !fullscreen && (_fullscreenPlayerPresented || forced))
     {
         [self videoPlayerViewControllerWillDismiss:_playerViewController];
         [_presentingViewController dismissViewControllerAnimated:YES completion:^{
