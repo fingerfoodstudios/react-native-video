@@ -180,10 +180,10 @@ static NSString *const timedMetadata = @"timedMetadata";
 - (void)applicationDidRotate:(NSNotification *)notification
 {
     UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
-    if (UIDeviceOrientationIsLandscape(orientation) && _shouldGoFullScreenOnRotation) {
-        [self setFullscreen:YES forced:YES];
-    } else if (UIDeviceOrientationIsPortrait(orientation) && _shouldGoFullScreenOnRotation) {
-        [self setFullscreen:NO forced:YES];
+    if (UIDeviceOrientationIsLandscape(orientation) && _shouldGoFullScreenOnRotation && !_fullscreenPlayerPresented) {
+        [self setFullscreen:YES];
+    } else if (UIDeviceOrientationIsPortrait(orientation) && _shouldGoFullScreenOnRotation && _fullscreenPlayerPresented) {
+        [self setFullscreen:NO];
     }
 }
 
@@ -642,9 +642,9 @@ static NSString *const timedMetadata = @"timedMetadata";
     return _fullscreenPlayerPresented;
 }
 
-- (void)setFullscreen:(BOOL)fullscreen forced:(BOOL)forced
+- (void)setFullscreen:(BOOL)fullscreen
 {
-    if( fullscreen && (!_fullscreenPlayerPresented || forced))
+    if( fullscreen && !_fullscreenPlayerPresented)
     {
         // Ensure player view controller is not null
         if( !_playerViewController )
@@ -671,16 +671,18 @@ static NSString *const timedMetadata = @"timedMetadata";
             if(self.onVideoFullscreenPlayerWillPresent) {
                 self.onVideoFullscreenPlayerWillPresent(@{@"target": self.reactTag});
             }
+            
+            _fullscreenPlayerPresented = fullscreen;
+
             [viewController presentViewController:_playerViewController animated:YES completion:^{
                 _playerViewController.showsPlaybackControls = _controls;
-                _fullscreenPlayerPresented = fullscreen;
                 if(self.onVideoFullscreenPlayerDidPresent) {
                     self.onVideoFullscreenPlayerDidPresent(@{@"target": self.reactTag});
                 }
             }];
         }
     }
-    else if ( !fullscreen && (_fullscreenPlayerPresented || forced))
+    else if ( !fullscreen && _fullscreenPlayerPresented )
     {
         [self videoPlayerViewControllerWillDismiss:_playerViewController];
         [_presentingViewController dismissViewControllerAnimated:YES completion:^{
