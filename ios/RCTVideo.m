@@ -19,6 +19,7 @@ static NSString *const timedMetadata = @"timedMetadata";
   BOOL _playerBufferEmpty;
   AVPlayerLayer *_playerLayer;
   AVPlayerViewController *_playerViewController;
+  BOOL _playerLayerObserversSet;
   NSURL *_videoURL;
 
   /* Required to publish events */
@@ -56,6 +57,7 @@ static NSString *const timedMetadata = @"timedMetadata";
     _eventDispatcher = eventDispatcher;
 
     _playbackRateObserverRegistered = NO;
+    _playerLayerObserversSet = NO;
     _playbackStalled = NO;
     _rate = 1.0;
     _volume = 1.0;
@@ -268,9 +270,7 @@ static NSString *const timedMetadata = @"timedMetadata";
  * observer set */
 - (void)removePlayerItemObservers
 {
-  if (_playerLayer) {
-    [_playerLayer removeObserver:self forKeyPath:readyForDisplayKeyPath];
-  }
+  [self removePlayerLayerObservers];
   if (_playerItemObserversSet) {
     [_playerItem removeObserver:self forKeyPath:statusKeyPath];
     [_playerItem removeObserver:self forKeyPath:playbackBufferEmptyKeyPath];
@@ -721,10 +721,23 @@ static NSString *const timedMetadata = @"timedMetadata";
       // resize mode must be set before layer is added
       [self setResizeMode:_resizeMode];
       [_playerLayer addObserver:self forKeyPath:readyForDisplayKeyPath options:NSKeyValueObservingOptionNew context:nil];
+      _playerLayerObserversSet = YES;
 
       [self.layer addSublayer:_playerLayer];
       self.layer.needsDisplayOnBoundsChange = YES;
     }
+}
+
+- (void)removePlayerLayerObservers
+{
+  if (_playerLayerObserversSet)
+  {
+    if (_playerLayer)
+    {
+      [_playerLayer removeObserver:self forKeyPath:readyForDisplayKeyPath];
+    }
+    _playerLayerObserversSet = NO;
+  }
 }
 
 - (void)setControls:(BOOL)controls
@@ -754,7 +767,7 @@ static NSString *const timedMetadata = @"timedMetadata";
 - (void)removePlayerLayer
 {
     [_playerLayer removeFromSuperlayer];
-    [_playerLayer removeObserver:self forKeyPath:readyForDisplayKeyPath];
+    [self removePlayerLayerObservers];
     _playerLayer = nil;
 }
 
